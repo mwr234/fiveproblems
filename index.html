@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Five Things Nobody Knows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Libre+Franklin:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#14161B;
+  --surface:#1E222A;
+  --ink:#EAE8E3;
+  --ink-soft:#A8AEB8;
+  --ink-faint:#6F7683;
+  --rule:#333A46;
+  --known:#8FA6C4;        /* cool = settled */
+  --known-soft:#4E5C70;
+  --on-known:#12151A;
+  --open:#E8734A;         /* hot = still open */
+  --open-soft:#8C4A31;
+  --serif:"Instrument Serif",Georgia,serif;
+  --sans:"Libre Franklin","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  /* nothing in CSS reaches native scrollbars or spinners; this does */
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:400;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 120% 90% at 50% 38%, #1B1E26 0%, #15181E 58%, #101216 100%);
+}
+/* ---------- slide shell ---------- */
+.deck{position:relative;z-index:1;height:100%}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  padding:clamp(18px,3.4vh,52px) clamp(20px,5vw,80px) 78px;
+  overflow-y:auto;
+}
+.slide.active{display:flex;flex-direction:column}
+/* wide container, but line length is still capped on prose so the measure
+   stays readable; only charts, grids and canvases take the extra width */
+.slide-inner{width:100%;max-width:min(1560px,94vw);margin:0 auto;flex:1;display:flex;flex-direction:column;justify-content:center}
+
+/* ---------- type ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;font-weight:500;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);
+  margin-bottom:14px;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;
+}
+.eyebrow .yr{color:var(--open);position:relative}
+.slide.active .eyebrow .yr.flash{animation:yrflash 1.7s ease-out .35s both}
+@keyframes yrflash{
+  0%{color:var(--ink-faint);text-shadow:none}
+  14%{color:#fff;text-shadow:0 0 16px var(--open),0 0 34px var(--open)}
+  38%{color:var(--open);text-shadow:0 0 10px rgba(232,115,74,.55)}
+  58%{color:#fff;text-shadow:0 0 16px var(--open),0 0 30px var(--open)}
+  100%{color:var(--open);text-shadow:none}
+}
+@media (prefers-reduced-motion:reduce){.slide.active .eyebrow .yr.flash{animation:none}}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.4rem,min(8vw,11vh),6.4rem);line-height:.95;letter-spacing:-.015em}
+h2{font-family:var(--serif);font-weight:400;font-size:clamp(1.6rem,min(5vw,7.2vh),3.6rem);line-height:1.02;letter-spacing:-.01em;margin-bottom:clamp(10px,1.8vh,18px)}
+h2 em{font-style:italic;color:var(--open)}
+h3{font-family:var(--sans);font-weight:600;font-size:1.02rem;letter-spacing:.01em;margin-bottom:8px}
+p{font-size:clamp(.92rem,min(1.55vw,2.5vh),1.28rem);line-height:1.5;color:var(--ink-soft);max-width:62ch}
+p strong{color:var(--ink);font-weight:600}
+p + p{margin-top:14px}
+.lede{font-size:clamp(1.02rem,min(1.9vw,3vh),1.5rem);color:var(--ink);max-width:56ch}
+.mono{font-family:var(--mono)}
+.small{font-size:.9rem;line-height:1.5}
+
+/* ---------- step reveal ---------- */
+.step{opacity:0;transform:translateY(10px);transition:opacity .42s ease,transform .42s ease;pointer-events:none}
+.step.shown{opacity:1;transform:none;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){
+  .step{transition:none;transform:none}
+}
+
+/* ---------- the signature: frontier bar ---------- */
+.frontier{margin-top:26px;max-width:1120px}
+.frontier-label{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  margin-bottom:7px;
+}
+.frontier-label .k{color:var(--known)}
+.frontier-label .o{color:var(--open)}
+.bar{display:flex;height:52px;border:1.5px solid var(--ink);position:relative;background:var(--surface)}
+.bar .solid{
+  background:var(--known);color:var(--on-known);
+  display:flex;align-items:center;padding:0 16px;
+  font-family:var(--mono);font-size:1rem;font-weight:600;white-space:nowrap;overflow:hidden;
+}
+/* .bar .solid is display:flex, so a bare <sup> became a FLEX ITEM and
+   vertical-align was ignored entirely — that is why 2^71 kept reading as 271.
+   Wrapping the label in one span puts the sup back into inline flow, and
+   position:relative forces the lift regardless. */
+.bar .solid > span{display:inline-block;white-space:nowrap}
+.bar .solid sup{
+  font-size:.62em;font-weight:700;line-height:0;
+  position:relative;top:-.52em;left:.04em;letter-spacing:.02em;
+  vertical-align:baseline;
+}
+.bar .void{
+  flex:1;position:relative;color:var(--open);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:.78rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background-image:repeating-linear-gradient(45deg,transparent 0 7px,var(--open-soft) 7px 8px);
+}
+.bar .void > span{background:var(--surface);padding:4px 12px;box-shadow:0 0 0 1.5px var(--open)}
+.bar .void::before{
+  content:"";position:absolute;left:0;top:-9px;bottom:-9px;width:2.5px;background:var(--open);
+}
+.frontier-note{margin-top:12px;font-size:clamp(.95rem,min(1.4vw,2.2vh),1.12rem);line-height:1.5;color:var(--ink-soft);max-width:66ch}
+.frontier-note b{color:var(--ink);font-weight:600}
+
+/* ---------- misc components ---------- */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(18px,4vw,52px);align-items:center}
+.two.calc{grid-template-columns:minmax(0,.58fr) minmax(0,1.75fr);align-items:start}
+@media(max-width:900px){.two{grid-template-columns:1fr}.two.calc{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1.5px solid var(--ink);padding:20px 22px}
+.divider{height:1px;background:var(--rule);margin:22px 0;border:0}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+  text-transform:uppercase;padding:4px 9px;border:1.2px solid currentColor;
+}
+.tag.k{color:var(--known)} .tag.o{color:var(--open)}
+/* one line: name and statement side by side */
+.card.conj{border-color:var(--open);display:flex;align-items:baseline;gap:clamp(12px,1.6vw,24px);flex-wrap:wrap;padding:16px 22px}
+.card.conj .lbl{font-family:var(--mono);font-size:clamp(.72rem,min(1.05vw,1.7vh),.92rem);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--open);white-space:nowrap}
+.card.conj .txt{font-family:var(--serif);font-size:clamp(1.2rem,min(2.3vw,3.5vh),1.95rem);
+  line-height:1.2;color:var(--ink);flex:1 1 24ch;min-width:0;max-width:58ch}
+button.ctl{
+  font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--ink);color:var(--paper);border:1.5px solid var(--ink);
+  padding:9px 16px;cursor:pointer;transition:background .12s,color .12s,transform .06s;
+}
+button.ctl:hover{background:transparent;color:var(--ink)}
+button.ctl:active{transform:translateY(1px)}
+button.ctl.ghost{background:transparent;color:var(--ink)}
+button.ctl.ghost:hover{background:var(--ink);color:var(--paper)}
+button.ctl:focus-visible,input:focus-visible,.deck :focus-visible{outline:2.5px solid var(--open);outline-offset:3px}
+input[type=number]{appearance:textfield;-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{appearance:none;-webkit-appearance:none;margin:0}
+input[type=number],input[type=text]{
+  font-family:var(--mono);font-size:1rem;padding:8px 10px;
+  border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);width:150px;
+}
+input[type=range]{accent-color:var(--open);width:170px;vertical-align:middle}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.controls label{font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+figure{margin:0}
+figcaption{font-family:var(--sans);font-size:clamp(.95rem,min(1.4vw,2.2vh),1.14rem);line-height:1.5;
+  letter-spacing:normal;color:var(--ink-soft);margin-top:12px;max-width:none}
+figcaption b{color:var(--ink);font-weight:600}
+#cz-pick{min-height:3.1em}
+canvas{display:block;max-width:100%;height:auto;touch-action:none;background:var(--surface);border:1.5px solid var(--ink)}
+@media (max-height:760px){canvas{max-width:min(100%,74vh)}.seq{max-height:26vh;min-height:0}}
+h2.stmt{font-size:clamp(1.4rem,min(4vw,5.8vh),2.9rem);max-width:none;line-height:1.14;
+  margin-bottom:clamp(12px,2.2vh,22px)}
+h2.stmt em{font-style:italic}
+/* the slide is a column; the graph takes whatever height is left over */
+.slide-inner.fill{justify-content:flex-start;min-height:0}
+.graphbox{flex:1 1 auto;min-height:170px;position:relative;margin:2px 0 10px}
+.graphbox canvas{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;
+  background:var(--surface);border:1.5px solid var(--ink)}
+.calcwrap{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.calcwrap .controls{align-items:center;row-gap:8px;margin-bottom:8px}
+.calcwrap .czstats{margin-left:auto}
+.calcwrap .czstats .v{font-size:clamp(1.1rem,min(2vw,3vh),1.6rem)}
+#cz-seq{flex:0 0 auto;max-height:8.4em;min-height:0;
+  font-size:clamp(1rem,min(1.5vw,2.4vh),1.35rem);line-height:1.95}
+#cz-in{width:118px;font-size:1.15rem;text-align:right;font-variant-numeric:tabular-nums}
+.seq{
+  font-family:var(--mono);font-size:.95rem;line-height:2.05;font-variant-numeric:tabular-nums;
+  background:var(--surface);border:1.5px solid var(--ink);padding:14px;
+  min-height:96px;max-height:190px;overflow-y:auto;word-break:break-word;
+}
+.seq span{padding:2px 5px;margin-right:2px}
+.seq .odd{background:rgba(232,115,74,.14);color:var(--open);font-weight:500}
+.seq .one{background:var(--known);color:var(--on-known);font-weight:700}
+.stat{font-family:var(--mono);font-size:.86rem;color:var(--ink-soft);margin-top:10px}
+.stat b{color:var(--ink);font-size:1.05rem}
+button.ctl.sq{padding:9px 13px;font-size:.95rem;line-height:1}
+.czstats{display:flex;gap:clamp(14px,2.4vw,30px);flex-wrap:wrap;margin:12px 0 10px;align-items:baseline}
+.czstats .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint)}
+.czstats .v{font-family:var(--serif);font-variant-numeric:tabular-nums;font-size:clamp(1.4rem,min(2.6vw,3.8vh),2.2rem);line-height:1.05;font-variant-numeric:tabular-nums}
+.czstats .v.hi{color:var(--open)} .czstats .v.od{color:var(--known)}
+/* the order runners fall lonely, which is the whole point of the slide */
+#rn-order{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+#rn-order .row{display:flex;align-items:baseline;gap:12px;font-size:clamp(1rem,min(1.5vw,2.3vh),1.22rem);line-height:1.25}
+#rn-order .rank{font-family:var(--mono);font-size:.72em;color:var(--ink-faint);width:2.2em}
+#rn-order .who{font-family:var(--serif);font-size:1.35em;min-width:5.2em}
+#rn-order .when{font-family:var(--mono);font-size:.8em;color:var(--ink-faint)}
+#rn-order .row.now .who{color:var(--known)}
+#rn-order .row.pending .who{color:var(--open)}
+#rn-order .row.past .who{color:var(--ink-soft)}
+#rn-order .waiting{font-size:.95rem;color:var(--open);margin-top:4px}
+.seq i{font-style:normal;color:var(--ink-faint);padding:0 1px}
+.seq .pend{color:var(--ink-faint)}
+.seq .peak{background:var(--open);color:var(--surface);font-weight:700}
+
+/* ---------- chrome ---------- */
+.chrome{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:flex;align-items:center;gap:16px;
+  padding:12px clamp(20px,5vw,44px);
+  background:linear-gradient(to top,var(--paper) 62%,rgba(233,237,229,0));
+}
+.dots{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.dot{width:26px;height:4px;background:var(--rule);border:0;padding:0;cursor:pointer}
+.dot.on{background:var(--ink)}
+.dot.done{background:var(--known-soft)}
+.counter{font-family:var(--mono);font-size:.74rem;color:var(--ink-faint);letter-spacing:.1em;white-space:nowrap}
+.navbtn{
+  background:none;border:1.5px solid var(--rule);color:var(--ink-soft);
+  width:34px;height:34px;cursor:pointer;font-size:1rem;line-height:1;
+}
+.navbtn:hover{border-color:var(--ink);color:var(--ink)}
+.hint{
+  position:fixed;top:14px;right:clamp(20px,5vw,44px);z-index:20;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-faint);
+}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+<!-- ============ 0. TITLE ============ -->
+<section class="slide" data-steps="2">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>Open problems in mathematics</span><span class="yr">Status as of 2026</span></div>
+    <h1>Five things<br>nobody knows</h1>
+    <div class="step" style="margin-top:26px">
+      <p class="lede">Every problem here can be stated in a couple of minutes. None of them has been solved.</p>
+    </div>
+    <div class="step" style="margin-top:30px">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">What we have checked</span><span class="o">What nobody knows</span></div>
+        <div class="bar"><div class="solid" style="width:32%">everything up to here</div><div class="void"><span>no idea</span></div></div>
+        <p class="frontier-note">Each problem gets one of these bars. The solid block is how far anyone has gotten; the line is where the knowledge stops.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1. COLLATZ: THE RULE ============ -->
+<section class="slide" data-steps="1" data-viz="collatz">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 01</span><span>The 3n + 1 conjecture</span><span class="yr flash">Open since 1937</span></div>
+    <h2 class="stmt"><em>Even?</em> Halve it. &nbsp;<em>Odd?</em> Triple it and add one.</h2>
+    <div class="calcwrap">
+      <div class="controls">
+        <button class="ctl ghost sq" id="cz-dec" aria-label="Lower">&minus;</button>
+        <input type="number" id="cz-in" value="1" min="1" max="1000000000000" aria-label="Starting number">
+        <button class="ctl ghost sq" id="cz-inc" aria-label="Higher">+</button>
+        <button class="ctl" id="cz-next">Step</button>
+        <button class="ctl ghost" id="cz-play">Run</button>
+        <button class="ctl ghost sq" id="cz-reset" aria-label="Start over" title="Start over">&#8634;</button>
+      </div>
+      <div class="graphbox"><canvas id="cz-mini"></canvas></div>
+      <div class="seq" id="cz-seq"></div>
+      <div class="step" style="margin-top:12px">
+        <div class="card conj">
+          <span class="lbl">The 3n + 1 conjecture</span>
+          <span class="txt">Whatever number you start with, the rule always brings you down to&nbsp;1.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. COLLATZ: THE SCATTER ============ -->
+<section class="slide" data-steps="2" data-viz="scatter">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 01</span><span>The 3n + 1 conjecture</span></div>
+    <h2>Nobody can predict how long it takes.</h2>
+    <div class="controls" id="cz-ranges" style="margin-bottom:8px"></div>
+    <div class="graphbox"><canvas id="cz-scatter"></canvas></div>
+    <figcaption class="step" id="cz-pick">How many steps each starting number needs to reach 1. <b>Click any point</b> to send it to the calculator.</figcaption>
+    <div class="step" style="margin-top:12px">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Checked by computer</span><span class="o">Every larger number</span></div>
+        <div class="bar"><div class="solid" style="width:26%"><span>1 &rarr; 2<sup>71</sup></span></div><div class="void"><span>unknown</span></div></div>
+        <p class="frontier-note">Also called the Collatz conjecture. A distributed computing project has checked every start up to <b>2<sup>71</sup></b>, about 2.4 sextillion numbers. All of them reach 1. This proves nothing. Infinitely many numbers are left over, so the fraction checked is still zero.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. INSCRIBED SQUARE ============ -->
+<section class="slide" data-steps="2" data-viz="square">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>Problem 02</span><span>The inscribed square problem</span><span class="yr flash">Open since 1911</span></div>
+    <h2>Draw a loop. Find a <em>square</em> in it.</h2>
+    <div class="two">
+      <div>
+        <div class="controls">
+          <button class="ctl" id="sq-find">Find the square</button>
+          <button class="ctl ghost" id="sq-preset">Next shape</button>
+          <button class="ctl ghost" id="sq-clear">Draw my own</button>
+          <button class="ctl ghost" id="sq-all">Show the rest</button>
+        </div>
+        <div class="stat" id="sq-stat">Drag inside the box to draw a closed loop.</div>
+        <div class="step" style="margin-top:20px">
+          <p>Any closed loop that doesn't cross itself. Wobbly, lumpy, ugly &mdash; doesn't matter. Four of its points make a perfect square.</p>
+        </div>
+        <div class="step" style="margin-top:16px">
+          <div class="card conj">
+            <span class="lbl">The inscribed square conjecture</span>
+            <span class="txt">Every closed loop you can draw holds a square.</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <figure>
+          <canvas id="sq-canvas" width="620" height="470"></canvas>
+          <figcaption>Most loops hold several, at different sizes and angles. Every loop ever tried has at least one. <b>Next shape</b> ends on the rough one, where the proof runs out.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. INSCRIBED SQUARE: FRONTIER ============ -->
+<section class="slide" data-steps="3">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>Problem 02</span><span>The inscribed square problem</span></div>
+    <h2>It works every time.<br>That isn't a proof.</h2>
+    <div class="step">
+      <p class="lede">Otto Toeplitz asked this in 1911. It has been proved for smooth curves, for convex curves, for curves with corners, for fractal curves &mdash; for basically every class anyone has been able to pin down.</p>
+    </div>
+    <div class="step" style="margin-top:22px">
+      <p>The general case is still open, and the obstacle is exactly the curves you can't draw: continuous loops so pathological they have no tangent anywhere, infinite length in a finite space, wiggling at every scale. Those are the ones nobody can rule out.</p>
+    </div>
+    <div class="step">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Proved for these curves</span><span class="o">The rest</span></div>
+        <div class="bar"><div class="solid" style="width:58%">smooth &middot; convex &middot; piecewise-nice &middot; many fractals</div><div class="void"><span>unknown</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. LONELY RUNNER ============ -->
+<section class="slide" data-steps="2" data-viz="runner">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>Problem 03</span><span>The lonely runner conjecture</span><span class="yr flash">Open since 1967</span></div>
+    <h2>Does everyone get a moment <em>alone</em>?</h2>
+    <div class="two">
+      <div>
+        <div>
+          <div class="controls">
+            <label for="rn-n">Runners</label>
+            <input type="range" id="rn-n" min="3" max="9" value="3">
+            <span class="mono" id="rn-nv">3</span>
+            <label for="rn-speed" style="margin-left:10px">Speed</label>
+            <input type="range" id="rn-speed" min="1" max="40" value="12">
+            <span class="mono" id="rn-sv">1.0&times;</span>
+          </div>
+          <div class="controls">
+            <button class="ctl" id="rn-pause">Pause</button>
+            <button class="ctl ghost sq" id="rn-prev" title="Previous moment">&#9664;</button>
+            <button class="ctl ghost sq" id="rn-next" title="Next moment">&#9654;</button>
+            <button class="ctl ghost" id="rn-restart">Start over</button>
+          </div>
+          <div class="controls">
+            <label for="rn-t">Time</label>
+            <input type="range" id="rn-t" min="0" max="2000" value="0" style="width:230px">
+            <span class="mono" id="rn-tv">0.000</span>
+          </div>
+          <div class="controls">
+            <label>Speeds</label>
+            <span class="mono" id="rn-speeds" style="color:var(--ink)"></span>
+            <button class="ctl ghost" id="rn-rand">New speeds</button>
+            <button class="ctl ghost" id="rn-consec">1, 2, 3, &hellip;</button>
+          </div>
+          <div class="stat" id="rn-tight"></div>
+          <div id="rn-order"></div>
+        </div>
+        <div class="step" style="margin-top:18px">
+          <p>They start together and never stop. Each one has to get his own clear moment, and they do not come at the same time. Keep going until every runner has had one.</p>
+        </div>
+        <div class="step" style="margin-top:16px">
+          <div class="card conj">
+            <span class="lbl">The lonely runner conjecture</span>
+            <span class="txt">With <span id="rn-k">3</span> runners, <em style="color:var(--open)">every one of them</em> eventually gets <span id="rn-frac">1/3</span> of a lap of clear road on both sides.</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <figure>
+          <canvas id="rn-canvas" width="520" height="520"></canvas>
+          <figcaption>The run halts each time a new runner finds himself alone, and waits for you. <b style="color:var(--open)">Orange</b> is still waiting his turn; <b style="color:var(--known)">blue with a halo</b> is the one who just got his, with the dashed arc marking his <span id="rn-frac2">1/3</span> lap of clear road; faded is done.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. LONELY RUNNER: FRONTIER ============ -->
+<section class="slide" data-steps="3">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>Problem 03</span><span>The lonely runner conjecture</span></div>
+    <h2>Proved for ten runners.<br>Open for <em>eleven</em>.</h2>
+    <div class="step">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Proved</span><span class="o">Unknown</span></div>
+        <div class="bar"><div class="solid" style="width:30%">2, 3, 4, 5, 6, 7, 8, 9, 10 runners</div><div class="void"><span>11 or more</span></div></div>
+        <p class="frontier-note">Sixty years of work has gotten this from three runners to ten. Each new case has taken years and, lately, supercomputer time.</p>
+      </div>
+    </div>
+    <div class="step" style="margin-top:26px">
+      <p class="lede">Most of that progress is from the last twelve months.</p>
+      <p style="margin-top:10px">Seven runners fell in 2008, then nothing for seventeen years. In September 2025 Matthieu Rosenfeld got eight with a computer search. Weeks later nine and ten fell to <strong>Tanupat Trakulthongchai</strong>, an Oxford undergraduate, who found a way to sieve the search down to a feasible size.</p>
+    </div>
+    <div class="step" style="margin-top:18px">
+      <p>He did it by improving one step of someone else's search, not by inventing anything new.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9. TWIN PRIMES: THE HUNT ============ -->
+<section class="slide" data-steps="1" data-viz="twins">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 04</span><span>The twin prime conjecture</span><span class="yr flash">Open since antiquity</span></div>
+    <h2 class="stmt">Primes two apart. <em>Find the next pair.</em></h2>
+    <div class="calcwrap">
+      <div class="controls">
+        <button class="ctl" id="tw-next">Next pair</button>
+        <button class="ctl ghost" id="tw-back">Back</button>
+        <button class="ctl ghost" id="tw-reset">Start over</button>
+        <label style="margin-left:12px">Jump to</label>
+        <button class="ctl ghost" data-jump="1000">1 thousand</button>
+        <button class="ctl ghost" data-jump="1000000">1 million</button>
+        <button class="ctl ghost" data-jump="1000000000">1 billion</button>
+        <div class="czstats" id="tw-stats"></div>
+      </div>
+      <div class="graphbox" style="min-height:200px"><canvas id="tw-strip"></canvas></div>
+      <div class="seq" id="tw-list" style="max-height:4.2em"></div>
+      <div class="step" style="margin-top:12px">
+        <div class="card conj">
+          <span class="lbl">The twin prime conjecture</span>
+          <span class="txt">There are infinitely many twin primes.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. TWIN PRIMES: THINNING + FRONTIER ============ -->
+<section class="slide" data-steps="2" data-viz="thin">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 04</span><span>The twin prime conjecture</span></div>
+    <h2>They thin out. They never stop.</h2>
+    <div class="graphbox"><canvas id="tw-chart"></canvas></div>
+    <figcaption class="step" id="tw-cap">Twin pairs found in each block of 100,000, walking out from zero. The count keeps falling &mdash; and keeps being greater than zero. <b>Click any bar</b> for its numbers.</figcaption>
+    <div class="step" style="margin-top:12px">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Proved: some gap this size recurs for ever</span><span class="o">Wanted</span></div>
+        <div class="bar"><div class="solid" style="width:72%">gap &le; 246</div><div class="void"><span>gap = 2</span></div></div>
+        <p class="frontier-note">In 2013 nobody could prove that <em>any</em> fixed gap repeats for ever. Yitang Zhang got it below 70 million; a Polymath collaboration with James Maynard drove it to 246 within a year. It has not moved since.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. GOLDBACH: THE HUNT ============ -->
+<section class="slide" data-steps="1" data-viz="goldbach">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 05</span><span>Goldbach&rsquo;s conjecture</span><span class="yr flash">Open since 1742</span></div>
+    <h2 class="stmt">Every even number. <em>Two primes. Add them.</em></h2>
+    <div class="calcwrap">
+      <div class="controls">
+        <label for="gb-in">Even number</label>
+        <button class="ctl ghost sq" id="gb-dec" aria-label="Lower">&minus;</button>
+        <input type="number" id="gb-in" value="10" min="4" step="2" aria-label="Even number">
+        <button class="ctl ghost sq" id="gb-inc" aria-label="Higher">+</button>
+        <button class="ctl" id="gb-next">Find a pair</button>
+        <button class="ctl ghost" id="gb-all">Show all</button>
+        <button class="ctl ghost" id="gb-rand">Surprise me</button>
+        <div class="czstats" id="gb-stats"></div>
+      </div>
+      <div class="graphbox" style="min-height:140px"><canvas id="gb-strip"></canvas></div>
+      <div class="seq" id="gb-list"></div>
+      <div class="step" style="margin-top:12px">
+        <div class="card conj">
+          <span class="lbl">Goldbach&rsquo;s conjecture</span>
+          <span class="txt">Every even number above 2 is two primes added together.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12. GOLDBACH: THE COMET ============ -->
+<section class="slide" data-steps="2" data-viz="comet">
+  <div class="slide-inner fill">
+    <div class="eyebrow"><span>Problem 05</span><span>Goldbach&rsquo;s conjecture</span></div>
+    <h2>Not one way. Many ways.</h2>
+    <div class="graphbox"><canvas id="gb-comet"></canvas></div>
+    <figcaption class="step" id="gb-cap">How many prime pairs each even number has. No number has ever come close to zero &mdash; the count runs away upward. <b>Click any point</b> to send it back to the finder.</figcaption>
+    <div class="step" style="margin-top:12px">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Checked by computer</span><span class="o">Every larger number</span></div>
+        <div class="bar"><div class="solid" style="width:30%"><span>4 &rarr; 4&times;10<sup>18</sup></span></div><div class="void"><span>unknown</span></div></div>
+        <p class="frontier-note">Every even number up to <b>4&times;10<sup>18</sup></b> has been checked and every one works. The odd-number version &mdash; every odd number above 7 is a sum of three primes &mdash; was <b>proved</b> by Harald Helfgott in 2013. The even version, needing only two primes, is still open.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. CLOSING ============ -->
+<section class="slide" data-steps="4">
+  <div class="slide-inner">
+    <div class="eyebrow"><span>In closing</span></div>
+    <h2>None of this is settled history.</h2>
+    <div class="step">
+      <p class="lede">Look at who moved them recently.</p>
+    </div>
+    <div class="step" style="margin-top:18px">
+      <p><strong>Yitang Zhang</strong> was an adjunct lecturer nobody had heard of. He put the first finite bound on prime gaps in 2013.</p>
+      <p><strong>Tanupat Trakulthongchai</strong> was an undergraduate. He advanced the lonely runner conjecture in 2025.</p>
+      <p><strong>Harald Helfgott</strong> settled the odd-number half of Goldbach in 2013, after 271 years. The even half is still open.</p>
+    </div>
+    <div class="step" style="margin-top:22px">
+      <p>None of them needed a new branch of mathematics. They needed one good idea about a problem you can state in a sentence.</p>
+    </div>
+    <div class="step" style="margin-top:26px">
+      <div class="frontier">
+        <div class="frontier-label"><span class="k">Known</span><span class="o">Open</span></div>
+        <div class="bar"><div class="solid" style="width:24%">all of the above</div><div class="void"><span>everything else</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+<div class="hint">&larr; &rarr; or space</div>
+<div class="chrome">
+  <button class="navbtn" id="prev" aria-label="Previous">&larr;</button>
+  <button class="navbtn" id="next" aria-label="Next">&rarr;</button>
+  <div class="dots" id="dots"></div>
+  <div class="counter" id="counter"></div>
+</div>
+<script>
+/* ============================================================
+   DECK ENGINE
+   ============================================================ */
+const C = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let INK, INKS, FAINT, KNOWN, OPEN, RULE, SURF;
+function palette() {
+  INK = C('--ink'); INKS = C('--ink-soft'); FAINT = C('--ink-faint');
+  KNOWN = C('--known'); OPEN = C('--open'); RULE = C('--rule'); SURF = C('--surface');
+}
+palette();
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const slides = [...document.querySelectorAll('.slide')];
+const state = slides.map(s => ({ steps: +s.dataset.steps || 0, at: 0 }));
+let cur = 0;
+const started = new Set();
+
+function renderSteps() {
+  const s = slides[cur], st = state[cur];
+  const rb = s.querySelector('[data-revealer]');
+  if (rb) rb.textContent = st.at >= st.steps ? 'Hide it again' : rb.dataset.revealer;
+  const els = [...s.querySelectorAll('.step')];
+  els.map((el, i) => [el, +(el.dataset.order || i + 1)])
+     .sort((a, b) => a[1] - b[1])
+     .forEach(([el], i) => el.classList.toggle('shown', i < st.at));
+  const v = s.dataset.viz;
+  if (v && ONSTEP[v]) ONSTEP[v](st.at);
+}
+function setSteps(v) {
+  state[cur].at = Math.max(0, Math.min(state[cur].steps, v));
+  renderSteps(); chrome();
+}
+function show(i) {
+  if (i < 0 || i >= slides.length) return;
+  slides[cur].classList.remove('active');
+  cur = i;
+  slides[cur].classList.add('active');
+  renderSteps();
+  const viz = slides[cur].dataset.viz;
+  if (viz && !started.has(viz) && VIZ[viz]) { started.add(viz); try { VIZ[viz](); } catch (e) { console.error(viz, e); } }
+  if (viz && RESIZE[viz]) RESIZE[viz]();
+  chrome();
+}
+function next() {
+  const st = state[cur];
+  if (st.at < st.steps) { st.at++; renderSteps(); chrome(); }
+  else if (cur < slides.length - 1) { state[cur + 1].at = 0; show(cur + 1); }
+}
+function prev() {
+  const st = state[cur];
+  if (st.at > 0) { st.at--; renderSteps(); chrome(); }
+  else if (cur > 0) { state[cur - 1].at = state[cur - 1].steps; show(cur - 1); }
+}
+const dotsEl = document.getElementById('dots'), counterEl = document.getElementById('counter');
+slides.forEach((_, i) => {
+  const b = document.createElement('button');
+  b.className = 'dot'; b.setAttribute('aria-label', 'Slide ' + (i + 1));
+  b.onclick = () => { state[i].at = state[i].steps; show(i); };
+  dotsEl.appendChild(b);
+});
+function syncHash() {
+  const h = '#s=' + (cur + 1) + (state[cur].at ? '&k=' + state[cur].at : '');
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+function readHash() {
+  const m = /s=(\d+)/.exec(location.hash), k = /k=(\d+)/.exec(location.hash);
+  const i = m ? Math.min(slides.length, Math.max(1, +m[1])) - 1 : 0;
+  state[i].at = k ? Math.min(state[i].steps, +k[1]) : 0;
+  return i;
+}
+function chrome() {
+  syncHash();
+  [...dotsEl.children].forEach((d, i) => {
+    d.classList.toggle('on', i === cur);
+    d.classList.toggle('done', i < cur);
+  });
+  const st = state[cur];
+  counterEl.textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0')
+    + (st.steps ? '  \u00b7  ' + st.at + '/' + st.steps : '');
+}
+document.getElementById('next').onclick = next;
+document.getElementById('prev').onclick = prev;
+addEventListener('keydown', e => {
+  if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+  else if (e.key === 'Home') { state[0].at = 0; show(0); }
+  else if (e.key === 'End') { const l = slides.length - 1; state[l].at = state[l].steps; show(l); }
+});
+
+/* canvas helper: crisp on hidpi, returns ctx with CSS-pixel coordinates */
+/* canvas sized BY the layout, not the other way round */
+function fit(cv) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect();
+  const w = Math.max(240, Math.round(r.width)), h = Math.max(140, Math.round(r.height));
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+let rzT = 0;
+addEventListener('resize', () => {
+  clearTimeout(rzT);
+  rzT = setTimeout(() => Object.values(RESIZE).forEach(f => { try { f(); } catch (e) {} }), 120);
+});
+function setup(cv) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.width, h = cv.height;
+  if (!cv._w) { cv._w = w; cv._h = h; cv.style.width = w + 'px'; cv.style.height = 'auto'; }
+  cv.width = cv._w * dpr; cv.height = cv._h * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: cv._w, h: cv._h };
+}
+
+const VIZ = {}, RESIZE = {}, ONSTEP = {};
+
+/* ============================================================
+   01 · COLLATZ CALCULATOR  (graph is the hero; controls are one row)
+   ============================================================ */
+const LINK = {};
+function collatzSeq(n, cap = 100000) {
+  const out = [n];
+  /* 3n+1 climbs: bail before the arithmetic stops being exact */
+  while (n !== 1 && out.length < cap && n < Number.MAX_SAFE_INTEGER / 3) {
+    n = n % 2 === 0 ? n / 2 : 3 * n + 1; out.push(n);
+  }
+  return out;
+}
+const fmt = v => v.toLocaleString('en-US');
+/* axis ticks abbreviate: a trajectory peaking at 2.8e11 would otherwise want
+   15 characters of label in a 66px gutter */
+const shortNum = v => {
+  const a = Math.abs(v);
+  if (a < 10000) return v.toLocaleString('en-US');
+  const trim = (x, suf) => (Math.round(x * 10) / 10).toString().replace(/\.0$/, '') + suf;
+  if (a < 1e6) return trim(v / 1e3, 'k');
+  if (a < 1e9) return trim(v / 1e6, 'M');
+  if (a < 1e12) return trim(v / 1e9, 'B');
+  return trim(v / 1e12, 'T');
+};
+function niceTicks(max, want) {
+  const raw = max / want, mag = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1))));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(t => max / t <= want + 1) || 10 * mag;
+  const out = []; for (let v = 0; v <= max + 1e-9; v += step) out.push(v);
+  if (out[out.length - 1] < max) out.push(out[out.length - 1] + step);
+  return out;
+}
+
+VIZ.collatz = () => {
+  const cv = document.getElementById('cz-mini'),
+        inp = document.getElementById('cz-in'),
+        seqBox = document.getElementById('cz-seq'),
+        bNext = document.getElementById('cz-next'),
+        bPlay = document.getElementById('cz-play');
+  let core = [], seq = [], shown = 1, raf = 0;
+
+  function chart() {
+    const { ctx, w, h } = fit(cv);
+    const pad = { l: 66, r: 18, t: 18, b: 42 }, pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+    const N = Math.max(shown, core.length), mx = Math.max(...seq.slice(0, N));
+    /* A single point used to land dead centre and sit on the ceiling gridline,
+       because the x fallback was 0.5 and niceTicks(1) tops out at exactly 1.
+       Give the axes a floor span and always leave headroom above the peak. */
+    const span = Math.max(N - 1, 4);
+    const tk = niceTicks(Math.max(mx * 1.08, 4), Math.max(3, Math.min(6, Math.floor(ph / 46))));
+    const top = tk[tk.length - 1];
+    const X = i => pad.l + (i / span) * pw;
+    const Y = v => pad.t + ph - (v / top) * ph;
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = '11px "JetBrains Mono",monospace'; ctx.lineWidth = 1;
+    tk.forEach(t => {
+      ctx.strokeStyle = RULE; ctx.beginPath();
+      ctx.moveTo(pad.l, Y(t)); ctx.lineTo(w - pad.r, Y(t)); ctx.stroke();
+      ctx.fillStyle = FAINT; ctx.textAlign = 'right'; ctx.fillText(shortNum(t), pad.l - 8, Y(t) + 4);
+    });
+    ctx.fillStyle = FAINT;
+    const xs = span <= 12 ? 1 : span <= 40 ? 5 : span <= 130 ? 10 : 25;
+    for (let i = 0; i <= span; i += xs) {
+      ctx.textAlign = i === 0 ? 'left' : 'center';
+      ctx.fillText(i, X(i), h - 22);
+    }
+    ctx.font = 'italic 15px "Instrument Serif",Georgia,serif';
+    ctx.fillStyle = INKS; ctx.textAlign = 'center';
+    ctx.fillText('step', pad.l + pw / 2, h - 1);
+    ctx.save(); ctx.translate(16, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('value', 0, 0); ctx.restore();
+    ctx.textAlign = 'left';
+    const vis = seq.slice(0, shown);
+    ctx.strokeStyle = OPEN; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath();
+    vis.forEach((v, i) => i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v)));
+    ctx.stroke();
+    if (N <= 240) vis.forEach((v, i) => {
+      ctx.beginPath(); ctx.arc(X(i), Y(v), N <= 45 ? 4.2 : 2.6, 0, 7);
+      ctx.fillStyle = v % 2 ? OPEN : INKS; ctx.fill();
+    });
+    if (N <= 30 && pw / Math.max(N, 5) > 34) {
+      ctx.fillStyle = INK; ctx.textAlign = 'center'; ctx.font = '600 12px "JetBrains Mono",monospace';
+      vis.forEach((v, i) => ctx.fillText(fmt(v), X(i), Y(v) - 12));
+      ctx.textAlign = 'left';
+    }
+    const pk = seq.indexOf(mx);
+    if (pk < shown && seq[pk] > seq[0]) {
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(X(pk), Y(seq[pk]), 7, 0, 7); ctx.stroke();
+    }
+    if (shown > core.length) {                      /* the trap begins here */
+      const cx0 = X(core.length - 1);
+      ctx.strokeStyle = INKS; ctx.globalAlpha = .55; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cx0, pad.t); ctx.lineTo(cx0, pad.t + ph); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.fillStyle = INKS; ctx.textAlign = 'center';
+      ctx.font = 'italic 14px "Instrument Serif",Georgia,serif';
+      ctx.fillText('reaches 1', cx0, pad.t - 4);
+      ctx.textAlign = 'left';
+    }
+  }
+  function draw() {
+    const vis = seq.slice(0, shown);
+    const reached = shown >= core.length, done = shown === seq.length;
+    const peak = Math.max(...vis), pi = vis.indexOf(peak);
+    seqBox.innerHTML = vis.map((v, i) => {
+      const isPeak = i === pi && peak > seq[0];
+      return '<span class="' + (isPeak ? 'peak' : v % 2 ? 'odd' : '') + '">' + fmt(v) + '</span>';
+    }).join('<i>\u2192</i>')
+      + (done ? '<i>\u2192</i><span class="pend">and round for ever</span>'
+              : '<i>\u2192</i><span class="pend">\u2026</span>');
+    seqBox.scrollTop = seqBox.scrollHeight;
+    bNext.disabled = seq.length >= core.length + 400 && shown === seq.length;
+    bPlay.disabled = shown >= core.length;   /* Run stops at 1 */
+    chart();
+  }
+  function setN(v) {
+    cancelAnimationFrame(raf);
+    v = Math.max(1, Math.min(1e12, Math.floor(v) || 1));
+    inp.value = v;
+    core = collatzSeq(v);
+    seq = core.slice();             /* the trap is grown on demand, not pre-baked */
+    shown = 1; draw();
+  }
+  LINK.setCollatz = setN;
+  bNext.onclick = () => {
+    cancelAnimationFrame(raf);
+    /* past 1 the rule simply keeps applying: 1 -> 4 -> 2 -> 1, for ever */
+    if (shown === seq.length && seq.length < core.length + 400) {
+      const v = seq[seq.length - 1];
+      seq.push(v % 2 === 0 ? v / 2 : 3 * v + 1);
+    }
+    if (shown < seq.length) { shown++; draw(); }
+  };
+  document.getElementById('cz-reset').onclick = () => { cancelAnimationFrame(raf); shown = 1; draw(); };
+  document.getElementById('cz-dec').onclick = () => setN(+inp.value - 1);
+  document.getElementById('cz-inc').onclick = () => setN(+inp.value + 1);
+  bPlay.onclick = () => {
+    cancelAnimationFrame(raf);
+    const from = shown, total = core.length,
+          dur = REDUCED ? 0 : Math.min(4200, 400 + (total - from) * 55), t0 = performance.now();
+    (function frame(t) {
+      const u = dur ? Math.min(1, (t - t0) / dur) : 1;
+      shown = Math.max(from, Math.round(from + u * (total - from)));
+      draw(); if (u < 1) raf = requestAnimationFrame(frame);
+    })(t0);
+  };
+  function evalNum(txt) {
+    const t = String(txt).replace(/\s|,/g, '').replace(/\^/g, '**');
+    if (!t || !/^[\d+\-*/().**]+$/.test(t)) return NaN;
+    try { const v = Function('"use strict";return(' + t + ')')(); return Number.isFinite(v) ? Math.floor(v) : NaN; }
+    catch (e) { return NaN; }
+  }
+  inp.oninput = () => { const v = evalNum(inp.value); if (v >= 1) setN(v); };
+  inp.onblur = () => { const v = evalNum(inp.value); if (v >= 1) setN(v); };
+  inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+  RESIZE.collatz = draw;
+  setN(1);
+};
+
+/* ============================================================
+   02 · STOPPING TIMES — choosable range, drawn left to right
+   ============================================================ */
+VIZ.scatter = () => {
+  const cv = document.getElementById('cz-scatter'),
+        note = document.getElementById('cz-pick'),
+        chips = document.getElementById('cz-ranges');
+
+  /* Cost measured: a full memoised sieve to 100,000 is ~15ms, and a 10,000-wide
+     window anywhere up to 10^12 is ~40ms. Range is cheap; rendering is the cost,
+     so points are drawn once onto an offscreen layer and blitted each frame. */
+  const RANGES = [
+    { label: '1 – 10k',   lo: 1,     count: 10000  },
+    { label: '1 – 100k',  lo: 1,     count: 100000 },
+    { label: '1M – 1.01M', lo: 1e6,  count: 10000  },
+    { label: '1B – 1B+10k', lo: 1e9, count: 10000  }
+  ];
+  let R = RANGES[0], vals = null, mx = 1;
+
+  function compute() {
+    const { lo, count } = R;
+    vals = new Int32Array(count);
+    if (lo === 1) {
+      const memo = new Int32Array(count + 1);
+      for (let i = 2; i <= count; i++) {
+        let n = i, c = 0;
+        while (n !== 1) { n = n % 2 ? 3 * n + 1 : n / 2; c++; if (n <= count && memo[n]) { c += memo[n]; break; } }
+        memo[i] = c;
+      }
+      for (let k = 0; k < count; k++) vals[k] = memo[k + 1] || 0;
+    } else {
+      for (let k = 0; k < count; k++) {
+        let n = lo + k, c = 0;
+        while (n !== 1) { n = n % 2 ? 3 * n + 1 : n / 2; c++; }
+        vals[k] = c;
+      }
+    }
+    mx = 0; for (let k = 0; k < count; k++) if (vals[k] > mx) mx = vals[k];
+  }
+  const nOf = k => R.lo + k;
+  const stepsOf = k => vals[k];
+
+  let progress = 0, drawn = 0, hover = -1, raf = 0, G = null, layer = null, lctx = null;
+
+  function geom() {
+    const { ctx, w, h } = fit(cv);
+    const pad = { l: 62, r: 22, t: 22, b: 46 }, pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+    G = { ctx, w, h, pad, pw, ph,
+      X: k => pad.l + (k / (R.count - 1)) * pw,
+      Y: v => pad.t + ph - (v / mx) * ph };
+    if (!layer || layer.width !== Math.round(w) || layer.height !== Math.round(h)) {
+      layer = document.createElement('canvas');
+      layer.width = Math.round(w); layer.height = Math.round(h);
+      lctx = layer.getContext('2d'); drawn = 0;
+    }
+    return G;
+  }
+  function layerTo(upto) {
+    if (upto < drawn) { lctx.clearRect(0, 0, layer.width, layer.height); drawn = 0; }
+    lctx.fillStyle = INK; lctx.globalAlpha = .45;
+    const sz = R.count > 40000 ? 1 : 1.3;
+    for (let k = drawn; k < upto; k++) lctx.fillRect(G.X(k), G.Y(vals[k]), sz, sz);
+    lctx.globalAlpha = 1; drawn = upto;
+  }
+  function axes() {
+    const { ctx, w, h, pad, pw, ph, X, Y } = G;
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = '11px "JetBrains Mono",monospace'; ctx.lineWidth = 1;
+    niceTicks(mx, 5).forEach(t => {
+      if (t > mx) return;
+      ctx.strokeStyle = RULE; ctx.beginPath();
+      ctx.moveTo(pad.l, Y(t)); ctx.lineTo(w - pad.r, Y(t)); ctx.stroke();
+      ctx.fillStyle = FAINT; ctx.textAlign = 'right'; ctx.fillText(t, pad.l - 8, Y(t) + 4);
+    });
+    ctx.fillStyle = FAINT;
+    const short = v => v >= 1e9 ? (v / 1e9) + 'B' : v >= 1e6 ? (v / 1e6) + 'M' : v >= 1000 ? (v / 1000) + 'k' : String(v);
+    [0, .25, .5, .75, 1].forEach(f => {
+      const k = Math.round(f * (R.count - 1));
+      ctx.textAlign = f === 0 ? 'left' : f === 1 ? 'right' : 'center';
+      ctx.fillText(short(nOf(k)), X(k), h - 26);
+    });
+    ctx.font = 'italic 15px "Instrument Serif",Georgia,serif';
+    ctx.fillStyle = INKS; ctx.textAlign = 'center';
+    ctx.fillText('starting number  n', pad.l + pw / 2, h - 7);
+    ctx.save(); ctx.translate(17, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('steps to reach 1', 0, 0); ctx.restore();
+    ctx.textAlign = 'left';
+  }
+  function paint() {
+    geom(); axes();
+    const upto = Math.round(progress * R.count);
+    layerTo(upto);
+    G.ctx.drawImage(layer, 0, 0, G.w, G.h);
+    const { ctx, w, pad, ph, X, Y } = G;
+    if (progress > 0 && progress < 1) {
+      ctx.strokeStyle = OPEN; ctx.globalAlpha = .6; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(X(upto), pad.t); ctx.lineTo(X(upto), pad.t + ph); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (hover >= 0 && progress >= 1) {
+      const hx = X(hover), hy = Y(stepsOf(hover));
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1; ctx.globalAlpha = .45;
+      ctx.beginPath(); ctx.moveTo(hx, pad.t); ctx.lineTo(hx, pad.t + ph); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad.l, hy); ctx.lineTo(w - pad.r, hy); ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(hx, hy, 7, 0, 7); ctx.stroke();
+      ctx.fillStyle = OPEN; ctx.beginPath(); ctx.arc(hx, hy, 3.2, 0, 7); ctx.fill();
+      const lab = fmt(nOf(hover)) + '  \u00b7  ' + stepsOf(hover) + ' steps';
+      ctx.font = '600 13px "JetBrains Mono",monospace';
+      const tw = Math.max(ctx.measureText(lab).width,
+                          ctx.measureText('1,000,000,000  \u00b7  000 steps').width);
+      const lx = Math.min(Math.max(pad.l + 4, hx + 14), w - 22 - tw - 8);
+      const ly = Math.max(pad.t + 22, hy - 14);
+      ctx.fillStyle = SURF; ctx.fillRect(lx - 6, ly - 15, tw + 12, 21);
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1; ctx.strokeRect(lx - 6, ly - 15, tw + 12, 21);
+      ctx.fillStyle = INK; ctx.fillText(lab, lx, ly);
+    }
+  }
+  function fill() {
+    if (REDUCED) { progress = 1; paint(); return; }
+    const DUR = 4200, t0 = performance.now();
+    cancelAnimationFrame(raf);
+    (function frame(t) {
+      progress = Math.min(1, (t - t0) / DUR);
+      paint();
+      if (progress < 1) raf = requestAnimationFrame(frame);
+    })(t0);
+  }
+  function pick(r) {
+    R = r; compute(); drawn = 0; layer = null; hover = -1;
+    [...chips.children].forEach(c => c.classList.toggle('ghost', c.dataset.lab !== r.label));
+    progress = 0; paint();
+    if (state[cur] && state[cur].at >= 1) fill();
+  }
+  RANGES.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'ctl ghost'; b.dataset.lab = r.label; b.textContent = r.label;
+    b.onclick = () => pick(r);
+    chips.appendChild(b);
+  });
+
+  ONSTEP.scatter = at => {
+    if (at >= 1 && progress === 0) fill();
+    if (at === 0 && progress !== 0) { cancelAnimationFrame(raf); progress = 0; drawn = 0; hover = -1; paint(); }
+  };
+
+  const at = e => {
+    if (!G) return -1;
+    const r = cv.getBoundingClientRect();
+    const mx0 = (e.clientX - r.left) * (G.w / r.width),
+          my0 = (e.clientY - r.top) * (G.h / r.height);
+    const centre = Math.round((mx0 - G.pad.l) / G.pw * (R.count - 1));
+    const span = Math.max(40, Math.ceil(R.count / G.pw * 16));   /* ~16px of numbers */
+    let best = Math.max(0, Math.min(R.count - 1, centre)), bd = Infinity;
+    for (let k = Math.max(0, centre - span); k <= Math.min(R.count - 1, centre + span); k++) {
+      const dx = G.X(k) - mx0, dy = G.Y(vals[k]) - my0, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = k; }
+    }
+    return best;
+  };
+  cv.style.cursor = 'crosshair';
+  /* The caption never follows the cursor: rewriting it on mousemove changed its
+     line count, reflowed the figure and made the plot appear to jump. */
+  cv.onmousemove = e => { if (progress < 1) return; const k = at(e); if (k !== hover) { hover = k; paint(); } };
+  cv.onmouseleave = () => { if (hover >= 0) { hover = -1; paint(); } };
+  cv.onclick = e => {
+    if (progress < 1) return;
+    const k = at(e); hover = k; paint();
+    const nn = nOf(k);
+    if (LINK.setCollatz) LINK.setCollatz(nn);
+    note.innerHTML = '<b>' + fmt(nn) + '</b> takes ' + stepsOf(k)
+      + ' steps. Loaded into the calculator \u2014 press <b>&larr;</b> to step through it.';
+  };
+  RESIZE.scatter = () => { drawn = 0; layer = null; paint(); };
+  compute(); pick(RANGES[0]);
+};
+
+/* ============================================================
+   03 · INSCRIBED SQUARE
+   ============================================================ */
+VIZ.square = () => {
+  const cv = document.getElementById('sq-canvas');
+  const { ctx, w, h } = setup(cv);
+  const stat = document.getElementById('sq-stat');
+  let pts = [], drawing = false, found = null;
+
+  const PRESETS = [
+    { name: 'circle', f: t => [w / 2 + 130 * Math.cos(t), h / 2 + 130 * Math.sin(t)] },
+    { name: 'lumpy blob', f: t => { const r = 118 + 34 * Math.sin(3 * t + .7) + 20 * Math.sin(5 * t + 2.1) - 14 * Math.cos(2 * t); return [w / 2 + r * Math.cos(t), h / 2 + r * Math.sin(t) * .92]; } },
+    { name: 'peanut', f: t => { const r = 132 * (1 + .42 * Math.cos(2 * t)) / 1.42; return [w / 2 + r * Math.cos(t) * 1.15, h / 2 + r * Math.sin(t) * .8]; } },
+    { name: 'wobbler', f: t => { const r = 122 + 26 * Math.sin(7 * t) + 15 * Math.cos(4 * t + 1); return [w / 2 + r * Math.cos(t), h / 2 + r * Math.sin(t)]; } },
+    { name: 'teardrop', f: t => { const r = 140 * Math.pow(Math.abs(Math.sin(t / 2)), .8) + 40; return [w / 2 + r * Math.cos(t) * .95, h / 2 - 10 + r * Math.sin(t)]; } },
+    /* Weierstrass-type radius: sum of a^k cos(b^k t) with a<1 and a*b>1, which in
+       the limit is continuous everywhere and differentiable nowhere. Keeping the
+       radius positive makes it star-shaped, so it never crosses itself.
+       A screen can only show finitely many terms; the real thing never smooths out. */
+    { name: 'nowhere smooth', rough: true, samples: 2600, f: t => {
+        let r = 0, a = 1, b = 1;
+        for (let k = 0; k < 9; k++) { r += a * Math.cos(b * t + k * 1.7); a *= .62; b *= 3; }
+        r = 120 + 26 * r / 2.632;
+        return [w / 2 + r * Math.cos(t), h / 2 + r * Math.sin(t) * .95];
+      } }
+  ];
+  let pi = 0, cp = null;
+  const loadPreset = () => {
+    const p = PRESETS[pi % PRESETS.length]; pi++; cp = p;
+    const ns = p.samples || 320;
+    pts = []; for (let i = 0; i < ns; i++) pts.push(p.f(i / ns * Math.PI * 2));
+    found = null; squares = []; si = 0; btn().textContent = 'Find the square';
+    stat.innerHTML = p.rough
+      ? 'Continuous everywhere, <b>no tangent anywhere</b>. This is the family the proof cannot reach. The inset magnifies a 3px sliver 30&times;: the wiggle never runs out.'
+      : 'Shape: ' + p.name + '. Now hunt for the square.';
+    render();
+  };
+
+  /* resample to evenly spaced points */
+  function resample(P, n) {
+    const L = [0]; let tot = 0;
+    for (let i = 1; i <= P.length; i++) {
+      const a = P[i - 1], b = P[i % P.length];
+      tot += Math.hypot(b[0] - a[0], b[1] - a[1]); L.push(tot);
+    }
+    const out = [];
+    for (let k = 0; k < n; k++) {
+      const d = k / n * tot;
+      let i = 1; while (i < L.length && L[i] < d) i++;
+      const a = P[(i - 1) % P.length], b = P[i % P.length];
+      const f = (d - L[i - 1]) / Math.max(1e-9, L[i] - L[i - 1]);
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]);
+    }
+    return out;
+  }
+  /* occupancy grid for fast "is this point on the curve" */
+  function rasterize(P, tol) {
+    const g = new Uint8Array(w * h);
+    const stamp = (x, y) => {
+      for (let dy = -tol; dy <= tol; dy++) for (let dx = -tol; dx <= tol; dx++) {
+        const X = Math.round(x + dx), Y = Math.round(y + dy);
+        if (X >= 0 && Y >= 0 && X < w && Y < h && dx * dx + dy * dy <= tol * tol) g[Y * w + X] = 1;
+      }
+    };
+    for (let i = 0; i < P.length; i++) {
+      const a = P[i], b = P[(i + 1) % P.length];
+      const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1])));
+      for (let k = 0; k <= n; k++) stamp(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n);
+    }
+    return g;
+  }
+  function distToCurve(P, x, y) {
+    let m = Infinity;
+    for (let i = 0; i < P.length; i++) {
+      const a = P[i], b = P[(i + 1) % P.length];
+      const vx = b[0] - a[0], vy = b[1] - a[1], L = vx * vx + vy * vy;
+      let t = L ? ((x - a[0]) * vx + (y - a[1]) * vy) / L : 0;
+      t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(x - a[0] - vx * t, y - a[1] - vy * t);
+      if (d < m) m = d;
+    }
+    return m;
+  }
+  let squares = [], si = 0, showAll = false;
+  const btn = () => document.getElementById('sq-find');
+  function findSquares() {
+    if (pts.length < 12) { stat.textContent = 'Draw a loop first.'; return; }
+    const S = resample(pts, 240), g = rasterize(S, 5), hits = [];
+    for (let i = 0; i < S.length; i++) {
+      for (let j = i + 14; j < S.length; j++) {
+        const ax = S[i][0], ay = S[i][1], bx = S[j][0], by = S[j][1];
+        const cx = (ax + bx) / 2, cy = (ay + by) / 2, dx = (bx - ax) / 2, dy = (by - ay) / 2;
+        const side = Math.hypot(dx, dy) * Math.SQRT2;
+        if (side < 40) continue;
+        const p1 = [cx - dy, cy + dx], p2 = [cx + dy, cy - dx];
+        const q1 = [Math.round(p1[0]), Math.round(p1[1])], q2 = [Math.round(p2[0]), Math.round(p2[1])];
+        if (q1[0] < 0 || q1[1] < 0 || q1[0] >= w || q1[1] >= h) continue;
+        if (q2[0] < 0 || q2[1] < 0 || q2[0] >= w || q2[1] >= h) continue;
+        if (!g[q1[1] * w + q1[0]] || !g[q2[1] * w + q2[0]]) continue;
+        const err = (distToCurve(S, p1[0], p1[1]) + distToCurve(S, p2[0], p2[1])) / 2;
+        if (err > 2.2) continue;
+        let ang = Math.atan2(dy, dx) * 180 / Math.PI; ang = ((ang % 90) + 90) % 90;
+        hits.push({ cx, cy, side, ang, err, corners: [[ax, ay], p1, [bx, by], p2] });
+      }
+    }
+    hits.sort((a, b) => a.err - b.err);
+    /* each square turns up once per diagonal, and near-identical ones cluster:
+       keep one per (centre, size, angle) family */
+    squares = [];
+    for (const f of hits) {
+      const dup = squares.some(k =>
+        Math.hypot(k.cx - f.cx, k.cy - f.cy) < 14 &&
+        Math.abs(k.side - f.side) / Math.max(k.side, f.side) < 0.12 &&
+        Math.min(Math.abs(k.ang - f.ang), 90 - Math.abs(k.ang - f.ang)) < 7);
+      if (!dup) squares.push(f);
+    }
+    si = 0; showSquare();
+  }
+  function showSquare() {
+    if (!squares.length) {
+      found = null; btn().textContent = 'Find the square';
+      stat.textContent = 'This search grid missed it \u2014 try a smoother loop. (The conjecture says one is in there.)';
+      render(); return;
+    }
+    const q = squares[si];
+    found = q.corners;
+    btn().textContent = squares.length > 1 ? 'Find another' : 'Find the square';
+    stat.innerHTML = squares.length > 1
+      ? 'Square <b>' + (si + 1) + '</b> of <b>' + squares.length + '</b>.'
+        + (squares.length >= 8 ? ' A circle has infinitely many.' : '')
+      : 'One square found.';
+    render();
+  }
+  function nextSquare() {
+    if (!squares.length) { findSquares(); return; }
+    si = (si + 1) % squares.length; showSquare();
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, w, h);
+    if (pts.length > 1) {
+      ctx.strokeStyle = INK; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      if (!drawing) ctx.closePath();
+      ctx.stroke();
+    }
+    squares.forEach((q, k) => {
+      if (k === si || !showAll) return;
+      ctx.strokeStyle = OPEN; ctx.globalAlpha = .16; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      q.corners.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      ctx.closePath(); ctx.stroke(); ctx.globalAlpha = 1;
+    });
+    if (cp && cp.rough) {
+      const bw = 168, bh = 120, bx = w - bw - 12, by = 12;
+      const t0 = 1.30, span = 0.028, M = 700;
+      const sm = [];
+      for (let i = 0; i <= M; i++) sm.push(cp.f(t0 + span * i / M));
+      let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      sm.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+      const sc = Math.min((bw - 16) / Math.max(1e-6, x1 - x0), (bh - 16) / Math.max(1e-6, y1 - y0));
+      const ox = bx + bw / 2 - (x0 + x1) / 2 * sc, oy = by + bh / 2 - (y0 + y1) / 2 * sc;
+      /* mark the sliver on the full curve */
+      const mid = cp.f(t0 + span / 2);
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(mid[0], mid[1], 7, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mid[0] + 6, mid[1] - 5); ctx.lineTo(bx, by + bh); ctx.globalAlpha = .5; ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = SURF; ctx.fillRect(bx, by, bw, bh);
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1.2; ctx.strokeRect(bx, by, bw, bh);
+      ctx.save(); ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
+      ctx.strokeStyle = INK; ctx.lineWidth = 1.4; ctx.beginPath();
+      sm.forEach((q, i) => { const X = q[0] * sc + ox, Y = q[1] * sc + oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+      ctx.stroke(); ctx.restore();
+      ctx.fillStyle = INKS; ctx.font = 'italic 13px "Instrument Serif",Georgia,serif';
+      ctx.fillText(Math.round(sc) + '\u00d7', bx + 7, by + bh - 7);
+    }
+    if (found) {
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      found.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = OPEN;
+      found.forEach(p => { ctx.beginPath(); ctx.arc(p[0], p[1], 4.5, 0, 7); ctx.fill(); });
+    }
+  }
+  const pos = e => {
+    const r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    return [(t.clientX - r.left) * (w / r.width), (t.clientY - r.top) * (h / r.height)];
+  };
+  const start = e => { e.preventDefault(); drawing = true; cp = null; pts = [pos(e)]; found = null; squares = []; si = 0;
+    btn().textContent = 'Find the square'; render(); };
+  const move = e => {
+    if (!drawing) return; e.preventDefault();
+    const p = pos(e), l = pts[pts.length - 1];
+    if (Math.hypot(p[0] - l[0], p[1] - l[1]) > 3) { pts.push(p); render(); }
+  };
+  const end = () => { if (!drawing) return; drawing = false; render(); stat.textContent = 'Loop closed. Now hunt for the square.'; };
+  cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move);
+  addEventListener('mouseup', end);
+  cv.addEventListener('touchstart', start, { passive: false });
+  cv.addEventListener('touchmove', move, { passive: false });
+  addEventListener('touchend', end);
+
+  document.getElementById('sq-find').onclick = nextSquare;
+  document.getElementById('sq-all').onclick = e => {
+    showAll = !showAll;
+    e.target.textContent = showAll ? 'Hide the rest' : 'Show the rest';
+    render();
+  };
+  document.getElementById('sq-preset').onclick = loadPreset;
+  RESIZE.square = render;
+  document.getElementById('sq-clear').onclick = () => {
+    pts = []; found = null; squares = []; si = 0; btn().textContent = 'Find the square';
+    render(); stat.textContent = 'Drag inside the box to draw a closed loop.';
+  };
+  loadPreset();
+};
+
+/* ============================================================
+   04 · LONELY RUNNER
+   Every runner at his true position; each lights up at his own moment.
+   State is a pure function of t — nothing depends on how you got there —
+   so the scrubber can run backwards and the picture stays honest.
+   ============================================================ */
+VIZ.runner = () => {
+  const cv = document.getElementById('rn-canvas');
+  const { ctx, w, h } = setup(cv);
+  const slider = document.getElementById('rn-n'),
+        nv = document.getElementById('rn-nv'),
+        sp = document.getElementById('rn-speed'),
+        svv = document.getElementById('rn-sv'),
+        tSl = document.getElementById('rn-t'),
+        tVal = document.getElementById('rn-tv'),
+        orderBox = document.getElementById('rn-order'),
+        kEl = document.getElementById('rn-k'),
+        fEl = document.getElementById('rn-frac'),
+        pauseBtn = document.getElementById('rn-pause');
+  let SPEEDS = [1, 2, 3, 5, 7, 8, 11, 13, 17];   /* distinct positive integers: the conjecture reduces to this case */
+  let N = 3, t = 0, running = false;   /* wait for the lecturer, not the slide */
+  let thr = 1 / 3, first = [], best = [], order = [], stops = [], tight = false;
+  let bestGapOf = 0;
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 54;
+
+  const frac = x => x - Math.floor(x);
+  const circDist = d => { d = frac(d); return Math.min(d, 1 - d); };
+  const posAt = tt => SPEEDS.slice(0, N).map(v => frac(v * tt));
+  const gapsAt = tt => {
+    const p = posAt(tt);
+    return p.map((pi, i) => {
+      let g = 1;
+      for (let j = 0; j < N; j++) if (j !== i) g = Math.min(g, circDist(pi - p[j]));
+      return g;
+    });
+  };
+  function momentsFor(j) {
+    const rel = SPEEDS.slice(0, N).map(v => v - SPEEDS[j]);
+    const gap = tt => { let g = 1; for (let i = 0; i < N; i++) if (i !== j) g = Math.min(g, circDist(rel[i] * tt)); return g; };
+    const M = 20000, g = new Float64Array(M), out = [];
+    let mx = 0;
+    for (let i = 0; i < M; i++) { g[i] = gap(i / M); if (g[i] > mx) mx = g[i]; }
+    bestGapOf = mx;
+    for (let i = 1; i < M; i++) {
+      if (!(g[i - 1] < thr && g[i] >= thr)) continue;
+      let lo = (i - 1) / M, hi = i / M;
+      for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (gap(m) < thr) lo = m; else hi = m; }
+      out.push(hi);
+    }
+    if (out.length) return { ts: out, instant: false };
+    for (let i = 1; i < M - 1; i++) {      /* extremal case: the gap only touches */
+      if (!(g[i] >= g[i - 1] && g[i] >= g[i + 1])) continue;
+      let lo = (i - 1) / M, hi = (i + 1) / M;
+      for (let k = 0; k < 70; k++) {
+        const a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3;
+        if (gap(a) < gap(b)) lo = a; else hi = b;
+      }
+      const tt = (lo + hi) / 2;
+      if (gap(tt) >= thr - 1e-6 && !out.some(x => Math.abs(x - tt) < 1e-4)) out.push(tt);
+    }
+    return { ts: out.sort((a, b) => a - b), instant: true };
+  }
+  function reset(keepT) {
+    N = +slider.value; nv.textContent = N;
+    if (kEl) kEl.textContent = N;
+    if (fEl) fEl.textContent = '1/' + N;
+    const f2 = document.getElementById('rn-frac2'); if (f2) f2.textContent = '1/' + N;
+    thr = 1 / N; first = []; best = []; stops = []; tight = false;
+    for (let j = 0; j < N; j++) {
+      const m = momentsFor(j);
+      if (m.instant) tight = true;
+      first[j] = m.ts.length ? m.ts[0] : Infinity;
+      best[j] = bestGapOf;
+    }
+    document.getElementById('rn-speeds').textContent = SPEEDS.slice(0, N).join(', ');
+    /* what the unluckiest runner ever gets, against what he needs */
+    const slack = Math.min(...best) * N;
+    document.getElementById('rn-tight').innerHTML = slack < 1.005
+      ? '<b style="color:' + OPEN + '">Exactly tight.</b> Not one runner ever gets a hair more than 1/' + N + '.'
+      : 'Room to spare: the unluckiest runner gets <b>' + slack.toFixed(2) + '&times;</b> what he needs.';
+    /* halt once per runner, at his first moment — not at every repeat, which
+       would be 14 stops at nine runners and no sense of progress */
+    first.forEach(tt => {
+      if (isFinite(tt) && !stops.some(x => Math.abs(x - tt) < 1e-9)) stops.push(tt);
+    });
+    stops.sort((a, b) => a - b);
+    if (!stops.length) stops = [0];
+    order = first.map((tt, j) => ({ j, t: tt })).sort((a, b) => a.t - b.t);
+    if (!keepT) t = 0;
+  }
+  const dt = () => (+sp.value / 12) * 0.0016;
+  const setT = v => { t = Math.max(0, Math.min(1, v)); };
+
+  /* Only runners who have ALREADY had their moment get a place in the order.
+     Listing the pending ones by their future times would tell the room who is
+     going to be next, which is the one thing worth waiting to find out. */
+  function drawOrder(lonely) {
+    let html = '';
+    const arrived = order.filter(o => t >= o.t - 1e-9);
+    arrived.forEach((o, k) => {
+      html += '<div class="row ' + (lonely[o.j] ? 'now' : 'past') + '">'
+        + '<span class="rank">' + (k + 1) + '.</span>'
+        + '<span class="who">Runner ' + (o.j + 1) + '</span>'
+        + '<span class="when">alone at t = ' + o.t.toFixed(3) + '</span>'
+        + '</div>';
+    });
+    const waiting = [];
+    for (let j = 0; j < N; j++) if (!(t >= first[j] - 1e-9)) waiting.push(j + 1);
+    if (!arrived.length) html += '<div class="row pending"><span class="rank">\u00b7</span>'
+      + '<span class="who">Nobody yet</span></div>';
+    html += '<div class="waiting">' + (waiting.length
+      ? 'Still to come: ' + waiting.join(', ')
+      : '<b style="color:' + KNOWN + '">All ' + N + ' have had their moment.</b>') + '</div>';
+    orderBox.innerHTML = html;
+  }
+
+  function frame() {
+    const p = posAt(t), g = gapsAt(t);
+    const lonely = g.map(x => x >= thr - 1e-6);
+
+    ctx.clearRect(0, 0, w, h);
+    const any = lonely.some(Boolean);
+    ctx.lineWidth = 26;
+    ctx.strokeStyle = any ? KNOWN : INK; ctx.globalAlpha = any ? .18 : .06;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.5; ctx.strokeStyle = any ? KNOWN : RULE;
+    ctx.beginPath(); ctx.arc(cx, cy, R + 13, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, R - 13, 0, 7); ctx.stroke();
+
+    const a0 = -Math.PI / 2, ang = i => a0 + p[i] * 2 * Math.PI;
+    lonely.forEach((L, i) => {
+      if (!L) return;
+      ctx.strokeStyle = KNOWN; ctx.lineWidth = 3.5; ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, R + 21, ang(i) - thr * 2 * Math.PI, ang(i) + thr * 2 * Math.PI);
+      ctx.stroke(); ctx.setLineDash([]);
+    });
+    /* colour follows the deck: hot = still outstanding, cool = happening now,
+       dim = already settled. The old build had these two inverted. */
+    p.forEach((_, i) => {
+      const a = ang(i), x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+      const had = t >= first[i] - 1e-9;
+      const fresh = Math.abs(t - first[i]) < 1e-9;    /* his very first moment, right now */
+      const rad = fresh ? 18 : lonely[i] ? 14 : 10;
+      if (fresh) {
+        ctx.beginPath(); ctx.arc(x, y, rad + 9, 0, 7);
+        ctx.strokeStyle = KNOWN; ctx.globalAlpha = .45; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1;
+      }
+      ctx.beginPath(); ctx.arc(x, y, rad, 0, 7);
+      ctx.fillStyle = lonely[i] ? KNOWN : had ? INK : OPEN;
+      ctx.globalAlpha = lonely[i] ? 1 : had ? .32 : 1;
+      ctx.fill(); ctx.globalAlpha = 1;
+      if (lonely[i]) { ctx.strokeStyle = SURF; ctx.lineWidth = fresh ? 3 : 2.5; ctx.stroke(); }
+      ctx.fillStyle = lonely[i] ? '#12151A' : had ? SURF : '#12151A';
+      ctx.font = '700 ' + (fresh ? 17 : lonely[i] ? 14 : 11) + 'px "JetBrains Mono",monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(i + 1, x, y);
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+    });
+
+    const doneN = first.filter(f => t >= f - 1e-9).length;
+    ctx.textAlign = 'center';
+    ctx.font = '600 15px "JetBrains Mono",monospace';
+    ctx.fillStyle = doneN === N ? KNOWN : FAINT;
+    ctx.fillText(doneN + ' of ' + N + ' have had a turn', cx, cy - 4);
+    ctx.font = '12px "JetBrains Mono",monospace'; ctx.fillStyle = FAINT;
+    ctx.fillText('t = ' + t.toFixed(3), cx, cy + 20);
+    const fresh = first.map((f, i) => Math.abs(t - f) < 1e-9 ? i : -1).filter(i => i >= 0);
+    if (fresh.length && !running) {
+      ctx.font = 'italic 20px "Instrument Serif",Georgia,serif'; ctx.fillStyle = KNOWN;
+      ctx.fillText(fresh.length === 1
+        ? 'Runner ' + (fresh[0] + 1) + ' is alone'
+        : 'Runners ' + fresh.map(i => i + 1).join(', ') + ' are alone', cx, cy + 48);
+      ctx.font = '11px "JetBrains Mono",monospace'; ctx.fillStyle = FAINT;
+      ctx.fillText(moreToCome() ? 'press Continue' : 'and that is everyone \u2014 nothing left to wait for', cx, cy + 68);
+    }
+    ctx.textAlign = 'left';
+
+    drawOrder(lonely);
+    tSl.value = Math.round(t * 2000);
+    tVal.textContent = t.toFixed(3);
+
+    if (running && cv.closest('.slide').classList.contains('active')) {
+      const nxt = stops.find(x => x > t + 1e-9);
+      if (nxt === undefined) halt();          /* everyone has had a turn: stop here */
+      else {
+        const step = dt();
+        if (t + step >= nxt) { setT(nxt); halt(); } else setT(t + step);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  const moreToCome = () => stops.some(x => x > t + 1e-9);
+  function halt() {
+    running = false;
+    pauseBtn.textContent = !moreToCome() ? 'Start again' : (t > 1e-9 ? 'Continue' : 'Start');
+  }
+  const jump = dir => {
+    const nx = dir > 0 ? stops.find(x => x > t + 1e-9)
+                       : [...stops].reverse().find(x => x < t - 1e-9);
+    if (nx === undefined) { if (dir < 0) setT(0); }   /* no wandering past the end */
+    else setT(nx);
+    halt();
+  };
+  slider.oninput = () => { reset(false); running = false; pauseBtn.textContent = 'Start'; };
+  sp.oninput = () => { svv.textContent = (+sp.value / 12).toFixed(1) + '\u00d7'; };
+  tSl.oninput = () => { setT(+tSl.value / 2000); halt(); };
+  pauseBtn.onclick = () => {
+    if (!moreToCome()) { setT(0); running = true; pauseBtn.textContent = 'Pause'; return; }
+    running = !running;
+    if (running) pauseBtn.textContent = 'Pause'; else halt();
+  };
+  document.getElementById('rn-prev').onclick = () => jump(-1);
+  document.getElementById('rn-next').onclick = () => jump(1);
+  document.getElementById('rn-restart').onclick = () => { setT(0); halt(); pauseBtn.textContent = 'Start'; };
+  const useSpeeds = arr => { SPEEDS = arr; reset(false); running = false; pauseBtn.textContent = 'Start'; };
+  document.getElementById('rn-rand').onclick = () => {
+    const pool = []; for (let v = 1; v <= 20; v++) pool.push(v);
+    for (let i = pool.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [pool[i], pool[k]] = [pool[k], pool[i]]; }
+    useSpeeds(pool.slice(0, 9).sort((a, b) => a - b));
+  };
+  document.getElementById('rn-consec').onclick = () => useSpeeds([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  sp.oninput();
+  reset(false); pauseBtn.textContent = 'Start'; frame();
+};
+
+/* ============================================================
+   SHARED PRIME MACHINERY
+   ============================================================ */
+const SMALL = (() => {                      /* primes to 1e6, for sieving anything to 1e12 */
+  const L = 1000000, f = new Uint8Array(L + 1), out = [];
+  for (let i = 2; i <= L; i++) { if (!f[i]) { out.push(i); for (let j = i * i; j <= L; j += i) f[j] = 1; } }
+  return out;
+})();
+function isPrime(n) {
+  if (n < 2) return false;
+  for (const p of SMALL) { if (p * p > n) return true; if (n % p === 0) return n === p; }
+  return true;
+}
+/* segmented sieve: a boolean window [lo, lo+len) */
+function window_(lo, len) {
+  const b = new Uint8Array(len).fill(1);
+  if (lo < 2) for (let i = 0; i < Math.min(2 - lo, len); i++) b[i] = 0;
+  for (const p of SMALL) {
+    if (p * p >= lo + len) break;
+    let st = Math.max(p * p, Math.ceil(lo / p) * p);
+    for (let j = st; j < lo + len; j += p) b[j - lo] = 0;
+  }
+  return b;
+}
+
+/* ============================================================
+   07 · TWIN PRIMES — hunt the next pair
+   ============================================================ */
+VIZ.twins = () => {
+  const cv = document.getElementById('tw-strip'),
+        listBox = document.getElementById('tw-list'),
+        statsBox = document.getElementById('tw-stats');
+  let base = 3, pairs = [], cursor = 3;
+
+  function nextPairFrom(n) {          /* smallest p >= n with p, p+2 both prime */
+    for (let p = Math.max(3, n); ; p++) if (isPrime(p) && isPrime(p + 2)) return p;
+  }
+  function addPair() {
+    const p = nextPairFrom(cursor);
+    pairs.push(p); cursor = p + 1; draw();
+  }
+  function draw() {
+    const { ctx, w, h } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const last = pairs.length ? pairs[pairs.length - 1] : base;
+
+    /* Cell size follows the digits actually on screen, and the grid fills the
+       whole box: a billion-scale window needs wide cells, a two-digit one does
+       not. More numbers visible means more chance to spot the next pair. */
+    const probe = (last + 400).toLocaleString();
+    let fs = 17;
+    const measure = () => { ctx.font = '600 ' + fs + 'px "JetBrains Mono",monospace'; return ctx.measureText(probe).width; };
+    let cw = measure() + 16, ch = fs * 2.0;
+    while ((Math.floor(w / cw) < 8 || Math.floor(h / ch) < 3) && fs > 9) {
+      fs -= 1; cw = measure() + 14; ch = fs * 2.0;
+    }
+    const cols = Math.max(6, Math.floor(w / cw));
+    const rows = Math.max(1, Math.floor(h / ch));
+    const total = cols * rows;
+    cw = w / cols; ch = h / rows;
+
+    /* put the newest pair about a third of the way in, so what comes next is
+       already on screen, unrevealed */
+    const lo = Math.max(1, last - Math.floor(total * 0.34));
+    const win = window_(lo, total + 3);
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let k = 0; k < total; k++) {
+      const num = lo + k, x = (k % cols) * cw, y = Math.floor(k / cols) * ch;
+      const pr = win[k] === 1;
+      const found = pairs.some(q => num === q || num === q + 2);
+      if (found) {
+        ctx.fillStyle = OPEN; ctx.globalAlpha = .2;
+        ctx.fillRect(x + 2, y + 2, cw - 4, ch - 4); ctx.globalAlpha = 1;
+        ctx.strokeStyle = OPEN; ctx.lineWidth = 1.2;
+        ctx.strokeRect(x + 2, y + 2, cw - 4, ch - 4);
+      }
+      ctx.fillStyle = found ? OPEN : pr ? INK : FAINT;
+      ctx.globalAlpha = found || pr ? 1 : .3;
+      ctx.font = (found ? '700 ' : pr ? '600 ' : '') + fs + 'px "JetBrains Mono",monospace';
+      ctx.fillText(num.toLocaleString(), x + cw / 2, y + ch / 2);
+      ctx.globalAlpha = 1;
+    }
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+
+    const gaps = pairs.slice(1).map((q, i) => q - pairs[i]);
+    statsBox.innerHTML = '<div><div class="k">pairs found</div><div class="v">' + pairs.length + '</div></div>'
+      + (gaps.length ? '<div><div class="k">biggest jump between pairs</div><div class="v" style="color:var(--open)">'
+          + Math.max(...gaps).toLocaleString() + '</div></div>' : '');
+    listBox.innerHTML = pairs.map(q =>
+      '<span class="odd">' + q.toLocaleString() + ', ' + (q + 2).toLocaleString() + '</span>').join('<i>&nbsp;</i>')
+      || '<span class="pend">Press Next pair \u2014 or find it yourself first.</span>';
+    listBox.scrollTop = listBox.scrollHeight;
+  }
+
+  document.getElementById('tw-next').onclick = addPair;
+  document.getElementById('tw-back').onclick = () => {
+    if (pairs.length) { pairs.pop(); cursor = pairs.length ? pairs[pairs.length - 1] + 1 : base; draw(); }
+  };
+  document.getElementById('tw-reset').onclick = () => { pairs = []; base = 3; cursor = 3; draw(); };
+  document.querySelectorAll('[data-jump]').forEach(b => {
+    b.onclick = () => { const j = +b.dataset.jump; pairs = []; base = j; cursor = j; addPair(); };
+  });
+  RESIZE.twins = draw;
+  draw();
+};
+
+/* ============================================================
+   08 · TWIN PRIMES — thinning, block by block
+   ============================================================ */
+VIZ.thin = () => {
+  const cv = document.getElementById('tw-chart'), cap = document.getElementById('tw-cap');
+  const BLOCK = 100000, NB = 20;
+  const counts = [], starts = [];
+  for (let b = 0; b < NB; b++) {
+    const lo = b * BLOCK, win = window_(lo, BLOCK + 2);
+    let c = 0;
+    for (let k = 0; k < BLOCK; k++) if (win[k] && win[k + 2]) c++;
+    counts.push(c); starts.push(lo);
+  }
+  const mx = Math.max(...counts);
+  let hover = -1, G = null;
+  const baseCap = cap.innerHTML;
+  function paint() {
+    const { ctx, w, h } = fit(cv);
+    const pad = { l: 62, r: 20, t: 20, b: 46 }, pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+    G = { w, h, pad, pw, ph };
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = '11px "JetBrains Mono",monospace';
+    niceTicks(mx, 5).forEach(t => {
+      if (t > mx) return;
+      const y = pad.t + ph - t / mx * ph;
+      ctx.strokeStyle = RULE; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+      ctx.fillStyle = FAINT; ctx.textAlign = 'right'; ctx.fillText(shortNum(t), pad.l - 8, y + 4);
+    });
+    const bw = pw / NB;
+    counts.forEach((c, i) => {
+      const x = pad.l + i * bw, hh = c / mx * ph;
+      ctx.fillStyle = i === hover ? OPEN : KNOWN;
+      ctx.globalAlpha = i === hover ? 1 : .8;
+      ctx.fillRect(x + bw * .13, pad.t + ph - hh, bw * .74, hh);
+      ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle = FAINT; ctx.textAlign = 'center'; ctx.font = '11px "JetBrains Mono",monospace';
+    [0, 5, 10, 15, 19].forEach(i => ctx.fillText(shortNum(starts[i]), pad.l + (i + .5) * bw, h - 26));
+    ctx.font = 'italic 15px "Instrument Serif",Georgia,serif'; ctx.fillStyle = INKS;
+    ctx.fillText('block of 100,000 starting at', pad.l + pw / 2, h - 7);
+    ctx.save(); ctx.translate(17, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('twin pairs in the block', 0, 0); ctx.restore();
+    ctx.textAlign = 'left';
+  }
+  const at = e => {
+    if (!G) return -1;
+    const r = cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (G.w / r.width);
+    const i = Math.floor((x - G.pad.l) / (G.pw / NB));
+    return i >= 0 && i < NB ? i : -1;
+  };
+  cv.style.cursor = 'crosshair';
+  cv.onmousemove = e => { const i = at(e); if (i !== hover) { hover = i; paint(); } };
+  cv.onmouseleave = () => { if (hover >= 0) { hover = -1; paint(); } };
+  cv.onclick = e => {
+    const i = at(e); if (i < 0) return;
+    hover = i; paint();
+    cap.innerHTML = 'From <b>' + starts[i].toLocaleString() + '</b> to <b>'
+      + (starts[i] + BLOCK).toLocaleString() + '</b> there are <b>' + counts[i]
+      + '</b> twin pairs. The first block has ' + counts[0] + '.';
+  };
+  RESIZE.thin = paint;
+  paint();
+};
+
+/* ============================================================
+   09 · GOLDBACH — find the pairs yourself
+   ============================================================ */
+VIZ.goldbach = () => {
+  const cv = document.getElementById('gb-strip'),
+        inp = document.getElementById('gb-in'),
+        listBox = document.getElementById('gb-list'),
+        statsBox = document.getElementById('gb-stats');
+  let n = 10, all = [], shownK = 0;
+
+  function pairsOf(v) {
+    const out = [];
+    for (let a = 2; a <= v / 2; a++) if (isPrime(a) && isPrime(v - a)) out.push([a, v - a]);
+    return out;
+  }
+  function setN(v) {
+    v = Math.max(4, Math.min(200000, Math.floor(v)));
+    if (v % 2) v++;
+    n = v; inp.value = n; all = pairsOf(n); shownK = 0; draw();
+  }
+  function draw() {
+    const { ctx, w, h } = fit(cv);
+    ctx.clearRect(0, 0, w, h);
+    const vis = all.slice(0, shownK);
+    /* each pair as a bar spanning a to n-a on a line from 0 to n */
+    const pad = { l: 54, r: 20, t: 16, b: 30 }, pw = w - pad.l - pad.r;
+    const X = v => pad.l + (v / n) * pw;
+    const rows = Math.max(1, vis.length), rh = Math.min(26, (h - pad.t - pad.b) / Math.max(4, rows));
+    ctx.strokeStyle = RULE; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, h - pad.b); ctx.lineTo(w - pad.r, h - pad.b); ctx.stroke();
+    ctx.fillStyle = FAINT; ctx.font = '11px "JetBrains Mono",monospace';
+    ctx.textAlign = 'left'; ctx.fillText('0', pad.l, h - pad.b + 15);
+    ctx.textAlign = 'right'; ctx.fillText(n.toLocaleString(), w - pad.r, h - pad.b + 15);
+    vis.forEach(([a, b], i) => {
+      const y = pad.t + i * rh + rh / 2;
+      if (y > h - pad.b - 4) return;
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(X(a), y); ctx.lineTo(X(b), y); ctx.stroke();
+      ctx.fillStyle = OPEN;
+      ctx.beginPath(); ctx.arc(X(a), y, 4, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(X(b), y, 4, 0, 7); ctx.fill();
+      ctx.fillStyle = INK; ctx.font = '600 12px "JetBrains Mono",monospace';
+      ctx.textAlign = 'right'; ctx.fillText(a.toLocaleString(), X(a) - 8, y + 4);
+      ctx.textAlign = 'left'; ctx.fillText(b.toLocaleString(), X(b) + 8, y + 4);
+    });
+    ctx.textAlign = 'left';
+    statsBox.innerHTML = '<div><div class="k">pairs found</div><div class="v">' + shownK + '</div></div>'
+      + (shownK >= all.length && all.length
+          ? '<div><div class="k">that is all of them</div><div class="v" style="color:var(--open)">' + all.length + '</div></div>' : '');
+    listBox.innerHTML = vis.length
+      ? vis.map(([a, b]) => '<span class="odd">' + a + ' + ' + b + '</span>').join('<i>&nbsp;</i>')
+      : '<span class="pend">Find a pair of primes that add to ' + n.toLocaleString() + '.</span>';
+  }
+  document.getElementById('gb-next').onclick = () => { if (shownK < all.length) { shownK++; draw(); } };
+  document.getElementById('gb-all').onclick = () => { shownK = all.length; draw(); };
+  document.getElementById('gb-dec').onclick = () => setN(n - 2);
+  document.getElementById('gb-inc').onclick = () => setN(n + 2);
+  document.getElementById('gb-rand').onclick = () => setN(4 + 2 * Math.floor(Math.random() * 250));
+  inp.oninput = () => { const v = parseInt(inp.value.replace(/[^\d]/g, ''), 10); if (v >= 4) setN(v); };
+  LINK.setGoldbach = setN;
+  RESIZE.goldbach = draw;
+  setN(10);
+};
+
+/* ============================================================
+   10 · GOLDBACH'S COMET
+   ============================================================ */
+VIZ.comet = () => {
+  const cv = document.getElementById('gb-comet'), cap = document.getElementById('gb-cap');
+  const NMAX = 4000, half = NMAX / 2 + 1;
+  const pr = new Uint8Array(NMAX + 1).fill(1); pr[0] = pr[1] = 0;
+  for (let i = 2; i * i <= NMAX; i++) if (pr[i]) for (let j = i * i; j <= NMAX; j += i) pr[j] = 0;
+  const cnt = new Int32Array(half);
+  for (let v = 4; v <= NMAX; v += 2) {
+    let c = 0; for (let a = 2; a <= v / 2; a++) if (pr[a] && pr[v - a]) c++;
+    cnt[v / 2] = c;
+  }
+  let mx = 0, mn = 1e9;
+  for (let v = 4; v <= NMAX; v += 2) { const c = cnt[v / 2]; if (c > mx) mx = c; if (c < mn) mn = c; }
+  let hover = 0, prog = 0, raf = 0, G = null;
+
+  function paint() {
+    const { ctx, w, h } = fit(cv);
+    const pad = { l: 62, r: 20, t: 20, b: 46 }, pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+    G = { w, h, pad, pw, ph, X: v => pad.l + (v / NMAX) * pw, Y: c => pad.t + ph - (c / mx) * ph };
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = '11px "JetBrains Mono",monospace';
+    niceTicks(mx, 5).forEach(t => {
+      if (t > mx) return;
+      const y = G.Y(t); ctx.strokeStyle = RULE; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w - pad.r, y); ctx.stroke();
+      ctx.fillStyle = FAINT; ctx.textAlign = 'right'; ctx.fillText(t, pad.l - 8, y + 4);
+    });
+    /* the floor: no even number has ever had zero */
+    ctx.strokeStyle = OPEN; ctx.globalAlpha = .5; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(pad.l, G.Y(0)); ctx.lineTo(w - pad.r, G.Y(0)); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = FAINT; ctx.textAlign = 'center';
+    [1000, 2000, 3000, 4000].forEach(v => ctx.fillText(v.toLocaleString(), G.X(v), h - 26));
+    ctx.font = 'italic 15px "Instrument Serif",Georgia,serif'; ctx.fillStyle = INKS;
+    ctx.fillText('even number', pad.l + pw / 2, h - 7);
+    ctx.save(); ctx.translate(17, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('ways to write it as two primes', 0, 0); ctx.restore();
+    ctx.textAlign = 'left';
+    const upto = 4 + Math.round(prog * (NMAX - 4) / 2) * 2;
+    ctx.fillStyle = KNOWN;
+    for (let v = 4; v <= upto; v += 2) ctx.fillRect(G.X(v), G.Y(cnt[v / 2]), 1.6, 1.6);
+    if (prog > 0 && prog < 1) {
+      ctx.strokeStyle = OPEN; ctx.globalAlpha = .6; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(G.X(upto), pad.t); ctx.lineTo(G.X(upto), pad.t + ph); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    if (hover && prog >= 1) {
+      const hx = G.X(hover), hy = G.Y(cnt[hover / 2]);
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(hx, hy, 7, 0, 7); ctx.stroke();
+      ctx.fillStyle = OPEN; ctx.beginPath(); ctx.arc(hx, hy, 3.2, 0, 7); ctx.fill();
+      const lab = hover.toLocaleString() + '  \u00b7  ' + cnt[hover / 2] + ' ways';
+      ctx.font = '600 13px "JetBrains Mono",monospace';
+      const tw = Math.max(ctx.measureText(lab).width, ctx.measureText('4,000  \u00b7  000 ways').width);
+      const lx = Math.min(Math.max(pad.l + 4, hx + 14), w - pad.r - tw - 8);
+      const ly = Math.max(pad.t + 22, hy - 14);
+      ctx.fillStyle = SURF; ctx.fillRect(lx - 6, ly - 15, tw + 12, 21);
+      ctx.strokeStyle = OPEN; ctx.lineWidth = 1; ctx.strokeRect(lx - 6, ly - 15, tw + 12, 21);
+      ctx.fillStyle = INK; ctx.fillText(lab, lx, ly);
+    }
+  }
+  function fill() {
+    if (REDUCED) { prog = 1; paint(); return; }
+    const DUR = 3600, t0 = performance.now(); cancelAnimationFrame(raf);
+    (function fr(t) { prog = Math.min(1, (t - t0) / DUR); paint(); if (prog < 1) raf = requestAnimationFrame(fr); })(t0);
+  }
+  ONSTEP.comet = at => {
+    if (at >= 1 && prog === 0) fill();
+    if (at === 0 && prog !== 0) { cancelAnimationFrame(raf); prog = 0; hover = 0; paint(); }
+  };
+  const at = e => {
+    if (!G) return 0;
+    const r = cv.getBoundingClientRect();
+    const mx0 = (e.clientX - r.left) * (G.w / r.width), my0 = (e.clientY - r.top) * (G.h / r.height);
+    let best = 4, bd = Infinity;
+    const c0 = Math.round((mx0 - G.pad.l) / G.pw * NMAX);
+    for (let v = Math.max(4, c0 - 300); v <= Math.min(NMAX, c0 + 300); v += 2) {
+      const dx = G.X(v) - mx0, dy = G.Y(cnt[v / 2]) - my0, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = v; }
+    }
+    return best;
+  };
+  cv.style.cursor = 'crosshair';
+  cv.onmousemove = e => { if (prog < 1) return; const v = at(e); if (v !== hover) { hover = v; paint(); } };
+  cv.onmouseleave = () => { if (hover) { hover = 0; paint(); } };
+  cv.onclick = e => {
+    if (prog < 1) return;
+    const v = at(e); hover = v; paint();
+    if (LINK.setGoldbach) LINK.setGoldbach(v);
+    cap.innerHTML = '<b>' + v.toLocaleString() + '</b> can be written as two primes in <b>'
+      + cnt[v / 2] + '</b> ways. Loaded into the finder \u2014 press <b>&larr;</b> to see them.';
+  };
+  RESIZE.comet = paint;
+  paint();
+};
+
+show(readHash());
+addEventListener('hashchange', () => show(readHash()));
+</script>
+</body>
+</html>
